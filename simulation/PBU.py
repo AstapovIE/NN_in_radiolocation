@@ -6,7 +6,6 @@ from .radar_system import RadarSystem
 from typing import List
 
 
-
 class PBU(Unit):
     def __init__(self, radars: List[RadarSystem] = None) -> None:
         super().__init__()
@@ -24,7 +23,12 @@ class PBU(Unit):
     def get_data(self) -> List[pd.DataFrame]:
         return [radar.get_data() for radar in self.__radars.values()]
 
+    def get_errors(self) -> List:
+        return [radar.get_error() for radar in self.__radars.values()]
 
+    def get_radars_position(self) -> List[np.array]:
+        positions = []
+        for radar in self.__radars.values():
+            positions.append(radar.get_position())
 
-
-
+        return positions

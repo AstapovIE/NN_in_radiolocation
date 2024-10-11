@@ -17,7 +17,8 @@ class AirEnv(Unit):
             self.__air_object_id_next = len(air_objects)
 
     def trigger(self) -> None:
-        pass
+        for ao in self.__air_objects.values():
+            ao.trigger()
 
     def is_attached(self, air_object: AirObject) -> bool:
         return air_object in self.__air_objects.values()

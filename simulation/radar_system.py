@@ -3,7 +3,7 @@ import pandas as pd
 
 from .unit import Unit
 from .air_env import AirEnv
-
+from tools import Physic
 
 
 class RadarSystem(Unit):
@@ -77,12 +77,12 @@ class RadarSystem(Unit):
         detections.drop(columns=['is_observed'], inplace=True)
 
         detections['time'] = self.time.get_time()
-        detections['r_true'], detections['fi_true'], detections['psi_true'] = self.__to_sphere_coord(
+        detections['r_true'], detections['fi_true'], detections['psi_true'] = Physic.to_sphere_coord(
             detections['x_true'], detections['y_true'], detections['z_true'])
         detections['x_measure'] = detections['x_true'] + np.random.normal(0, self.__error, len(detections))
         detections['y_measure'] = detections['y_true'] + np.random.normal(0, self.__error, len(detections))
         detections['z_measure'] = detections['z_true'] + np.random.normal(0, self.__error, len(detections))
-        detections['r_measure'], detections['fi_measure'], detections['psi_measure'] = self.__to_sphere_coord(
+        detections['r_measure'], detections['fi_measure'], detections['psi_measure'] = Physic.to_sphere_coord(
             detections['x_measure'], detections['y_measure'], detections['z_measure'])
 
         detections['x_err'] = self.__error
@@ -111,16 +111,6 @@ class RadarSystem(Unit):
         # Concat new detections with data
         self.__concat_data(detections)
 
-    def __to_sphere_coord(self, x, y, z) -> tuple:
-        """
-        Перевод декартовой системы координат в сферическую
-        :return: tuple
-        """
-        r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
-        fi = np.arctan(y / x)
-        psi = np.arctan(np.sqrt(x ** 2 + y ** 2) / z)
-        return (r, fi, psi)
-
     def __concat_data(self, df: pd.DataFrame) -> None:
         df = df[list(self.__data_dtypes.keys())].astype(self.__data_dtypes)
         if len(self.__data) == 0:
@@ -131,6 +121,15 @@ class RadarSystem(Unit):
 
     def get_data(self) -> pd.DataFrame:
         return self.__data.copy()
+
+    def get_position(self):
+        return self.__position
+
+    def get_detection_radius(self):
+        return self.__detection_radius
+
+    def get_error(self):
+        return self.__error
 
     def clear_data(self) -> None:
         self.__data = self.__data.iloc[0:0]

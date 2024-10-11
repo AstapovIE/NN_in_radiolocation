@@ -1,35 +1,28 @@
 import numpy as np
 import pandas as pd
 
-from simulation import Time
 from simulation import AirObject
 from simulation import AirEnv
 from simulation import RadarSystem
 from simulation import Trajectory, TrajectorySegment
-from simulation import PBU
+from simulation import PBU, SimulationManager
+from tools import Physic, MathStat
 from logger import Logger
-from tqdm import tqdm
 
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+# пбу в 0, у каждого своя с-ма координаты относ и потом пересчитывать {{{ ЮСТИРОВКА(учет ошибок, чтобы дальше было лучше,
+# исключ. систем. ошибки( нр неправ север и надо повернуть с-му) можно промоделировать это и тд)
+#
+# 2 radara,  цель стоит - улучшить оценки( зная реализации и параметры распр, матстат)
+#
+#
 
+# TODO снова задуматься над физичностью полета в конкретных координатх
+# TODO ещё раз подумать о характерных велечинах в реал лайф
+# TODO матстат ( несмещ и эффект ) + для разных типов(same)
 
-def calc_w(v: float, r: float):
-    """
-    Расчет угловой скорости рад / мс
-    v - м / мс
-    r - м
-    """
-    return v / r
-
-
-def convert_velocity(V: float):
-    """
-    V in meters/s
-    return: V in meters/ms
-    """
-
-    return V / 1000
+#  N(a, sigma^2)
+#  оценка a:  <x>  - несмещ и сост
+#  оценка sigma^2:  1/(n-1)*sum(xi-<x>)^2   - несмещ, сост и r-эфф(т.е. эфф в классе регулярных оценок) [выборочная дисперсия]
 
 
 # Создание объекта траектории
@@ -38,75 +31,101 @@ trajectory = Trajectory()
 # Первый сегмент: прямолинейное движение с момента t=0 до t=100 по осям x, y, z
 initial_position = [0, 0, 5]  # Начальная точка (x, y, z)
 
-velocity = [convert_velocity(250),
-            convert_velocity(220),
-            convert_velocity(0)
-            ]  # Скорости по x, y, z
-
-trajectory.add_segment(TrajectorySegment(0, 400, initial_position, 'linear', velocity))
+velocity = [Physic.convert_velocity(200),
+            Physic.convert_velocity(220),
+            Physic.convert_velocity(0)]  # Скорости по x, y, z
+trajectory.add_segment(TrajectorySegment(0, 300, initial_position, 'linear', velocity))
 
 # Второй сегмент: движение по окружности
-radius = 100
-angular_velocity = calc_w(convert_velocity(300), radius)
-vz = 0
-trajectory.add_segment(TrajectorySegment(401, 1000, None, 'circular', [radius, angular_velocity, vz],
+radius, vz = 100, 0
+angular_velocity = Physic.calc_w(Physic.convert_velocity(300), radius)
+trajectory.add_segment(TrajectorySegment(301, 1000, None, 'circular', [radius, angular_velocity, vz],
                                          previous_segment=trajectory.segments[-1]))
-
-# # 3 сегмент: прямолинейное движение с момента t=701 до t=1000 по осям x, y, z
-# trajectory.add_segment(TrajectorySegment(701, 1000, None, 'linear', velocity))
 
 ao = AirObject(trajectory)
 air_env = AirEnv([ao])
 detection_radius = 200
-radar1 = RadarSystem(position=np.array([50, 50, 0]), detection_radius=detection_radius, air_env=air_env)
-radar2 = RadarSystem(position=np.array([-50, 50, 0]), detection_radius=detection_radius, air_env=air_env)
-radar3 = RadarSystem(position=np.array([-50, -50, 0]), detection_radius=detection_radius, air_env=air_env)
-radar4 = RadarSystem(position=np.array([50, -50, 0]), detection_radius=detection_radius, air_env=air_env)
-pbu = PBU([radar1, radar2, radar3, radar4])
+e1 = 4
+e2 = 0.5
+# e3 = 1
+radar1 = RadarSystem(position=np.array([100, 100, 0]), detection_radius=detection_radius, air_env=air_env, error=e1)
+radar2 = RadarSystem(position=np.array([-100, 100, 0]), detection_radius=detection_radius, air_env=air_env, error=e2)
+# radar3 = RadarSystem(position=np.array([50, 50, 0]), detection_radius=detection_radius, air_env=air_env, error=e3)
 
-#----> решить что делать с системами координат, где ноль нужно ли считать относительно каждого радара. и тд..
+tm = 500
 
-
-t = Time()
-t1, t2 = 0, 1000
-for ms in tqdm(range(t1, t2)):
-    ao.trigger()
-    pbu.trigger()
-    t.step()
+sm = SimulationManager(air_env, PBU([radar1, radar2]), ao)  # передавать {ao} временное решение
+sm.run(0, tm)
 
 logger = Logger()
+# сохраняем данные в папку /logs
+dataframes = sm.get_data()
+for i in range(1, len(dataframes) + 1):
+    logger.log_dataFrame(dataframes[i - 1], f'logs{i}')
 
-dataframes = pbu.get_data()
-for i in range(1, len(dataframes)+1):
-    logger.log_dataFrame(dataframes[i-1], f'logs{i}')
+df1 = pd.read_csv("logs/logs1.csv")
+df2 = pd.read_csv("logs/logs2.csv")
+# df3 = pd.read_csv("logs/logs3.csv")
+list_of_df = [df1, df2]
+
+# --- MEAN
+e = np.zeros(tm)
+for i in range(1, tm):
+    x_true = list_of_df[0]["x_true"][i]
+    x_avg = np.mean([df["x_measure"][i] for df in list_of_df])  # среднее координаты по всем радарам
+    e[i] = round(abs(x_true - x_avg), 5)
 
 
+# e_w = np.zeros(tm)
+# # --- WEIGTHS
+# v1 = 1 / (e1**2)
+# v2 = 1 / (e2**2)
+# ss = v1 + v2
+# weigths = [v1 / ss, v2 / ss]
+# for i in range(1, tm):
+#     x_true = list_of_df[0]["x_true"][i]
+#     x = [0] * 2
+#     for q in range(2):
+#         x[q] = list_of_df[q]["x_measure"][i] * weigths[q]
+#     e_w[i] = round(abs(x_true - np.sum(x)), 5)
 
-# Визуализация
-fig, ax = plt.subplots()
-ax.set_xlim(-detection_radius*2 - 10, detection_radius*2 + 10)
-ax.set_ylim(-detection_radius*2 - 10, detection_radius*2 + 10)
 
-ax.add_patch(plt.Circle((-50, 50), detection_radius, color='b', fill=False, linestyle='--', label='Radar Range'))
-ax.add_patch(plt.Circle((50, 50), detection_radius, color='orange', fill=False, linestyle='--', label='Radar Range'))
-ax.add_patch(plt.Circle((50, -50), detection_radius, color='r', fill=False, linestyle='--', label='Radar Range'))
-ax.add_patch(plt.Circle((-50, -50), detection_radius, color='g', fill=False, linestyle='--', label='Radar Range'))
+e_w = np.zeros(tm)
+sigmas = sm.get_radar_errors()
 
-xdata, ydata = [], []
-line, = ax.plot(xdata, ydata, lw=2)
+for i in range(1, tm):
+    x_true = list_of_df[0]["x_true"][i]
+    x_estimated = MathStat.weighted_estimator([df["x_measure"][i] for df in list_of_df], sigmas)
+    e_w[i] = round(abs(x_true - np.sum(x_estimated)), 5)
 
-true_coord = ao.get_data()
-for i in tqdm(range(len(true_coord))):
-    xdata.append(true_coord['x_true'].iloc[i])
-    ydata.append(true_coord['y_true'].iloc[i])
 
-    line.set_data(xdata, ydata)
+# --- экспоненциальное сглаживание
+# eps = np.array([0.7, 0.6])
+# m = 2
+# dx_volna = np.ndarray((tm, m))
+# dx_volna[0] = [0, 0]
+#
+# e_eps = np.zeros(tm)
+# for i in range(1, tm):
+#     x_true = list_of_df[0]["x_true"][i]
+#     x = [df["x_measure"][i] for df in list_of_df]
+#     x_avg = np.mean(x)  # среднее координаты по всем радарам
+#     dx = np.array([(x_avg - df["x_measure"][i]) for df in list_of_df])
+#     tmp = []
+#     for q in range(m):
+#         tmp.append((1 - eps[q]) * dx[q] + eps[q] * dx_volna[i][q])
+#     dx_volna[i] = tmp
+#
+#     x_volna = np.mean(x + dx_volna)
+#     e_eps[i] = round(abs(x_true - x_volna), 8)
+# print(dx_volna)
 
-    # Перерисовываем график
-    plt.draw()
-    plt.pause(0.01)
 
-plt.xlabel('X Coordinate')
-plt.ylabel('Y Coordinate')
-plt.title('AirObject Trajectory in XY Plane')
+import matplotlib.pyplot as plt
+
+plt.plot(np.arange(5, tm), e[5:], color="r", label='mean')
+plt.plot(np.arange(1, tm), e_w[1:], color="b", alpha=0.5, label='weights')
+# plt.plot(np.arange(1, tm), e_w2[1:], color="g", alpha=0.5, label='weights2')
+plt.legend()
+plt.grid()
 plt.show()
