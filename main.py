@@ -12,17 +12,13 @@ from logger import Logger
 # пбу в 0, у каждого своя с-ма координаты относ и потом пересчитывать {{{ ЮСТИРОВКА(учет ошибок, чтобы дальше было лучше,
 # исключ. систем. ошибки( нр неправ север и надо повернуть с-му) можно промоделировать это и тд)
 #
-# 2 radara,  цель стоит - улучшить оценки( зная реализации и параметры распр, матстат)
-#
-#
+# TODO а что если есть смещенность у какого-то из рлс, оценить её и учесть это (как-то по первым измерениям)
+# 
+# TODO насколько итоговая ошибка std (после оценки) лучше чем были
+# TODO разные errors x2, x10
 
-# TODO снова задуматься над физичностью полета в конкретных координатх
-# TODO ещё раз подумать о характерных велечинах в реал лайф
-# TODO матстат ( несмещ и эффект ) + для разных типов(same)
-
-#  N(a, sigma^2)
-#  оценка a:  <x>  - несмещ и сост
-#  оценка sigma^2:  1/(n-1)*sum(xi-<x>)^2   - несмещ, сост и r-эфф(т.е. эфф в классе регулярных оценок) [выборочная дисперсия]
+#  снова задуматься над физичностью полета в конкретных координатах
+#  ещё раз подумать о характерных величинах в реал лайф
 
 
 # Создание объекта траектории
@@ -46,13 +42,14 @@ ao = AirObject(trajectory)
 air_env = AirEnv([ao])
 detection_radius = 200
 e1 = 4
-e2 = 0.5
+e2 = 4
+
 # e3 = 1
 radar1 = RadarSystem(position=np.array([100, 100, 0]), detection_radius=detection_radius, air_env=air_env, error=e1)
 radar2 = RadarSystem(position=np.array([-100, 100, 0]), detection_radius=detection_radius, air_env=air_env, error=e2)
 # radar3 = RadarSystem(position=np.array([50, 50, 0]), detection_radius=detection_radius, air_env=air_env, error=e3)
 
-tm = 500
+tm = 100
 
 sm = SimulationManager(air_env, PBU([radar1, radar2]), ao)  # передавать {ao} временное решение
 sm.run(0, tm)
@@ -68,7 +65,8 @@ df2 = pd.read_csv("logs/logs2.csv")
 # df3 = pd.read_csv("logs/logs3.csv")
 list_of_df = [df1, df2]
 
-# --- MEAN
+
+# ----------------------------------------------------- MEAN -----------------------------------------------
 e = np.zeros(tm)
 for i in range(1, tm):
     x_true = list_of_df[0]["x_true"][i]
@@ -90,9 +88,10 @@ for i in range(1, tm):
 #     e_w[i] = round(abs(x_true - np.sum(x)), 5)
 
 
+
+# ----------------------------------------------------- WEIGHTS -----------------------------------------------
 e_w = np.zeros(tm)
 sigmas = sm.get_radar_errors()
-
 for i in range(1, tm):
     x_true = list_of_df[0]["x_true"][i]
     x_estimated = MathStat.weighted_estimator([df["x_measure"][i] for df in list_of_df], sigmas)
@@ -120,6 +119,8 @@ for i in range(1, tm):
 #     e_eps[i] = round(abs(x_true - x_volna), 8)
 # print(dx_volna)
 
+
+# ----------------------------------------------------- VIZUAL -----------------------------------------------
 
 import matplotlib.pyplot as plt
 
