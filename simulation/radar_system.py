@@ -8,7 +8,8 @@ from tools import Physic
 
 class RadarSystem(Unit):
 
-    def __init__(self, position: np.array = np.array([0, 0, 0]), detection_radius: float = 10000, error: float = 1.,
+    def __init__(self, position: np.array = np.array([0, 0, 0]), detection_radius: float = 10000, mean: float = 0.,
+                 error: float = 1.,
                  air_env: AirEnv = None,
                  detection_fault_probability: float = 0.0, detection_period: int = 1,
                  detection_delay: int = 0) -> None:
@@ -19,6 +20,7 @@ class RadarSystem(Unit):
         self.__detection_delay = detection_delay % detection_period
         self.__detection_radius = detection_radius
 
+        self.__mean = mean
         self.__error = error
         self.__air_env = air_env
 
@@ -79,9 +81,9 @@ class RadarSystem(Unit):
         detections['time'] = self.time.get_time()
         detections['r_true'], detections['fi_true'], detections['psi_true'] = Physic.to_sphere_coord(
             detections['x_true'], detections['y_true'], detections['z_true'])
-        detections['x_measure'] = detections['x_true'] + np.random.normal(0, self.__error, len(detections))
-        detections['y_measure'] = detections['y_true'] + np.random.normal(0, self.__error, len(detections))
-        detections['z_measure'] = detections['z_true'] + np.random.normal(0, self.__error, len(detections))
+        detections['x_measure'] = detections['x_true'] + np.random.normal(self.__mean, self.__error, len(detections))
+        detections['y_measure'] = detections['y_true'] + np.random.normal(self.__mean, self.__error, len(detections))
+        detections['z_measure'] = detections['z_true'] + np.random.normal(self.__mean, self.__error, len(detections))
         detections['r_measure'], detections['fi_measure'], detections['psi_measure'] = Physic.to_sphere_coord(
             detections['x_measure'], detections['y_measure'], detections['z_measure'])
 
@@ -127,6 +129,9 @@ class RadarSystem(Unit):
 
     def get_detection_radius(self):
         return self.__detection_radius
+
+    def get_mean(self):
+        return self.__mean
 
     def get_error(self):
         return self.__error
