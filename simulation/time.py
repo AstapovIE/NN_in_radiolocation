@@ -30,11 +30,19 @@ class Time:
     def get_dt(self) -> int:
         return self.__dt
 
+    def set_dt(self, dt) -> None:
+        self.__dt = dt
+
     def set(self, t: int) -> None:
-        print(f'Time set: {self.__t}ms -> {t}ms')
+        # print(f'Time set: {self.__t}ms -> {t}ms')
         self.__t = t
 
     def step(self) -> None:
         self.__t += self.__dt
+
+    def reset(self):
+        print(f'Resetting time to 0ms')
+        self.set(0)
+
 
 

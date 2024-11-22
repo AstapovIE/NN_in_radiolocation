@@ -9,8 +9,8 @@ from simulation import AirEnv, PBU
 
 class SimulationManager:
 
-    def __init__(self, air_env: AirEnv, pbu: PBU, first_air_object=None) -> NoReturn:
-        self.__air_env = air_env
+    def __init__(self, pbu: PBU, first_air_object=None) -> NoReturn:
+        # self.__air_env = air_env
         self.__pbu = pbu
         # self.ao = first_air_object  # временное решение
 
@@ -24,6 +24,7 @@ class SimulationManager:
         """
         t = Time()
         t.set(t_min)
+        t.set_dt(dt)
 
         if progress:
             progressbar = tqdm(range(t_min, t_max + 1, dt))
@@ -34,6 +35,7 @@ class SimulationManager:
             self.__pbu.trigger()
             # self.__air_env.trigger()
             t.step()
+        t.reset()
 
     def get_data(self) -> List[pd.DataFrame]:
         """

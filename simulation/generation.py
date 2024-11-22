@@ -39,7 +39,7 @@ class Generator(Unit):
     def __get_time_interval(self, num_seg) -> tuple:
         start_time = self.time_intervals[num_seg] + 1 if num_seg > 0 else self.time_intervals[num_seg]
         end_time = self.time_intervals[num_seg + 1]
-        print(start_time, end_time, self.time_intervals)
+        # print(start_time, end_time, self.time_intervals)
         return start_time, end_time
 
     def __make_linear(self, trajectory, num_seg) -> TrajectorySegment:
@@ -51,7 +51,7 @@ class Generator(Unit):
         ]  # Скорости по x, y, z
 
         start_time, end_time = self.__get_time_interval(num_seg)
-        print(f"Linear st_t = {start_time}, end_t = {end_time}")
+        # print(f"Linear st_t = {start_time}, end_t = {end_time}")
         if len(trajectory.get_segments()):
             return TrajectorySegment(start_time, end_time, None, 'linear', velocity)
         else:
@@ -65,7 +65,7 @@ class Generator(Unit):
         angular_velocity = Physic.calc_w(v, radius)  # угловая скорость
         vz = np.random.choice(np.arange(-10, 10, 2))  # моделируем скорость по оси z при движении по окружности
         start_time, end_time = self.__get_time_interval(num_seg)
-        print(f"Circular st_t = {start_time}, end_t = {end_time}")
+        # print(f"Circular st_t = {start_time}, end_t = {end_time}")
         if len(trajectory.get_segments()) == 0:
             raise ValueError("Движение по окружности может быть только после прямолинейного")
         return TrajectorySegment(start_time, end_time, None, 'circular',
@@ -76,7 +76,7 @@ class Generator(Unit):
         ae = AirEnv()
         for _ in range(self.__num_samples):
             trajectory = Trajectory()
-            print(f"Id = {_}")
+            # print(f"Id = {_}")
             for num_seg in range(self.__num_seg):
                 motion_type = np.random.choice(['linear', 'circular'], [0, 1]) if num_seg >= 1 else 'linear'
                 if motion_type == 'linear':

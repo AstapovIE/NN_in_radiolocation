@@ -15,7 +15,7 @@ def singleton(cls):
 @singleton
 class Logger:
     def __init__(self) -> None:
-        self.path = os.path.join(os.getcwd(), "logs")
+        self.path = os.path.join(os.getcwd(), "data")
         try:
             os.mkdir(self.path)
         except OSError:
