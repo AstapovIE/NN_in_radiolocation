@@ -17,8 +17,9 @@ class AirEnv(Unit):
             self.__air_object_id_next = len(air_objects)
 
     def trigger(self) -> None:
-        for ao in self.__air_objects.values():
-            ao.trigger()
+        pass
+        # for ao in self.__air_objects.values():
+        #     ao.trigger()
 
     def is_attached(self, air_object: AirObject) -> bool:
         return air_object in self.__air_objects.values()
@@ -37,6 +38,9 @@ class AirEnv(Unit):
             if v == air_object:
                 self.__air_objects.pop(k, None)
                 return k
+
+    def get_air_objects_count(self):
+        return self.__air_object_id_next
 
     def air_objects_dataframe(self) -> pd.DataFrame:
         """

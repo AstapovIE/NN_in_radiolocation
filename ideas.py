@@ -73,8 +73,9 @@
 # for i in range(n_radars):
 #     plt.plot(np.arange(t2), X[i, :], label='meas')
 
-
-
+# import numpy as np
+#
+# print(np.random.uniform(0.05, 0.15))
 
 
 

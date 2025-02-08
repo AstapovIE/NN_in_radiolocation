@@ -1,0 +1,9 @@
+2025-02-08 21:30:33,668 - generation - DEBUG - Linear st_t = 0, end_t = 728323
+2025-02-08 21:30:33,668 - generation - DEBUG - V info num_seg = 0, v = [np.float64(-0.125), np.float64(-0.175), 0]
+2025-02-08 21:30:33,668 - generation - DEBUG - Circular st_t = 728324, end_t = 1000000
+2025-02-08 21:37:38,443 - generation - DEBUG - Linear st_t = 0, end_t = 88597
+2025-02-08 21:37:38,443 - generation - DEBUG - V info num_seg = 0, v = [np.float64(-0.2), np.float64(-0.125), 0]
+2025-02-08 21:37:38,443 - generation - DEBUG - Circular st_t = 88598, end_t = 1000000
+2025-02-08 21:44:44,312 - generation - DEBUG - Linear st_t = 0, end_t = 249550
+2025-02-08 21:44:44,312 - generation - DEBUG - V info num_seg = 0, v = [np.float64(-0.1), np.float64(-0.175), 0]
+2025-02-08 21:44:44,312 - generation - DEBUG - Circular st_t = 249551, end_t = 1000000

@@ -3,4 +3,5 @@ __pycache__/
 *.ipynb_checkpoints*
 .idea
 /data
+/data2
 /logs

@@ -15,11 +15,12 @@ class AirObject(Unit):
         self.__data = pd.DataFrame(columns=['x_true', 'y_true', 'z_true'])
 
     def trigger(self) -> None:
-        self.__data.loc[len(self.__data)] = {
-            'x_true': self.position()[0],
-            'y_true': self.position()[1],
-            'z_true': self.position()[2]
-        }
+        pass
+        # self.__data.loc[len(self.__data)] = {
+        #     'x_true': self.position()[0],
+        #     'y_true': self.position()[1],
+        #     'z_true': self.position()[2]
+        # }
 
     def position(self) -> np.array:
         return list(map(float, self.__track.get_position(self.time.get_time())))

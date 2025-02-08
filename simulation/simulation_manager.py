@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 from typing import List, NoReturn
 import matplotlib.pyplot as plt
@@ -9,8 +10,8 @@ from simulation import AirEnv, PBU
 
 class SimulationManager:
 
-    def __init__(self, pbu: PBU, first_air_object=None) -> NoReturn:
-        # self.__air_env = air_env
+    def __init__(self, air_env: AirEnv, pbu: PBU, first_air_object=None) -> NoReturn:
+        self.__air_env = air_env
         self.__pbu = pbu
         # self.ao = first_air_object  # временное решение
 
@@ -46,6 +47,9 @@ class SimulationManager:
     def get_radars_errors(self):
         return self.__pbu.get_errors()
 
+    # def set_radars_errors(self, new_errors: List[np.array]):
+    #     return self.__pbu.set_errors(new_errors)
+
     def get_radars_positions(self):
         return self.__pbu.get_radars_position()
 
@@ -61,13 +65,17 @@ class SimulationManager:
         fig, ax = plt.subplots()
 
         for i in range(self.__pbu.get_num_radars()):
-            ax.add_patch(plt.Circle(positions[i][:-1], radii[i], fill=False, linestyle='--', label='Radar Range'))
+            if i == 0:
+                ax.add_patch(plt.Circle(positions[i][:-1], radii[i], fill=False, linestyle='--', label='Зона обнаружения радара'))
+            else:
+                ax.add_patch(plt.Circle(positions[i][:-1], radii[i], fill=False, linestyle='--'))
 
-        plt.plot(data['x_true'], data['y_true'], label=f"Air object  true coords")
+        plt.plot(data['x_true'], data['y_true'], label=f"Траектория ВО")
 
         # plt.draw()
-        plt.xlabel('X Coordinate meters')
-        plt.ylabel('Y Coordinate meters')
-        plt.title('AirObject Trajectory in XY Plane')
+        plt.xlabel('X Координата (м)')
+        plt.ylabel('Y Координата (м)')
+        plt.title('Траектория ВО в плоскости Х У')
         plt.tight_layout()
+        plt.legend()
         plt.show()
