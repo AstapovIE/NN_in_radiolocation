@@ -14,6 +14,71 @@ class MathStat:
         return np.sum([(x_i - x_mean) ** 2 for x_i in x]) / (n - 1)
 
     @staticmethod
+    def calculate_sigma_x(r, theta, phi, sigma_r, sigma_theta, sigma_phi):
+        """
+        Вычисляет СКО для координаты x в декартовой системе.
+
+        Параметры:
+            r: Расстояние до цели (м).
+            theta: Полярный угол (радианы).
+            phi: Азимутальный угол (радианы).
+            sigma_r: СКО по радиусу (м).
+            sigma_theta: СКО по углу theta (радианы).
+            sigma_phi: СКО по углу phi (радианы).
+
+        Возвращает:
+            sigma_x: СКО для координаты x (м).
+        """
+        # Частные производные
+        dx_dr = np.sin(theta) * np.cos(phi)
+        dx_dtheta = r * np.cos(theta) * np.cos(phi)
+        dx_dphi = -r * np.sin(theta) * np.sin(phi)
+
+        # Дисперсия для x
+        sigma_x_squared = (
+                (dx_dr * sigma_r) ** 2 +
+                (dx_dtheta * sigma_theta) ** 2 +
+                (dx_dphi * sigma_phi) ** 2
+        )
+
+        # СКО для x
+        sigma_x = np.sqrt(sigma_x_squared)
+        return sigma_x
+
+    @staticmethod
+    def weighted_estimator_spherical(x: np.array, r: np.array, theta: np.array, phi: np.array,
+                                     sigma_r: np.array, sigma_theta: np.array, sigma_phi: np.array):
+        """
+        Расчет взвешенной оценки координаты x по данным от нескольких РЛС.
+
+        Параметры:
+            x: Массив измерений координаты x (м).
+            r: Массив расстояний до цели (м).
+            theta: Массив полярных углов (радианы).
+            phi: Массив азимутальных углов (радианы).
+            sigma_r: Массив СКО по радиусу (м).
+            sigma_theta: Массив СКО по углу theta (радианы).
+            sigma_phi: Массив СКО по углу phi (радианы).
+
+        Возвращает:
+            x_weighted: Взвешенная оценка координаты x (м).
+        """
+        # Вычисляем СКО для x для каждого радара
+        sigma_x = np.array([
+            MathStat.calculate_sigma_x(r[i], theta[i], phi[i], sigma_r[i], sigma_theta[i], sigma_phi[i])
+            for i in range(len(x))
+        ])
+
+        # Вычисляем веса
+        # v = 1 / sigma_x ** 2  # Веса как обратные квадратам СКО
+        # ss = np.sum(v)  # Сумма весов
+        # weights = v / ss  # Нормализованные веса
+        #
+        # # Взвешенное среднее
+        # x_weighted = np.sum(x * weights)
+        return MathStat.weighted_estimator(x, sigma_x)
+
+    @staticmethod
     def weighted_estimator(x: np.array, sigma):
         """
         Расчет оценки (несмещенной и с минимальной дисперсией) координаты цели по данным от нескольких рлс
